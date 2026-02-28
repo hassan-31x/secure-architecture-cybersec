@@ -58,6 +58,10 @@ The system is an online payment processing platform that enables customers to ma
 | TB-3 | **API Backend → Data Stores** | Application Tier → Data Tier | Backend queries databases, requires DB credentials and input sanitization. |
 | TB-4 | **API Backend → Payment Gateway** | Internal Network → External Third-Party | Outbound calls carrying sensitive card data, requires API credentials. |
 
+### 1.7 Architecture Diagram
+
+![Architecture Diagram](images/architecture.jpeg)
+
 ---
 
 ## Task 2: Asset Identification and Security Objectives
@@ -92,6 +96,10 @@ The system is an online payment processing platform that enables customers to ma
 | T9 | Denial of Service | API rate limit / DDoS, attacker floods API endpoints with requests to degrade or deny service. | API Backend, Web Frontend | Payment processing downtime, revenue loss, customer dissatisfaction. | **Medium** | Internet facing system is always a DDoS target. |
 | T10 | Information Disclosure | Sensitive data leaking into logs. PII, card numbers, or secrets accidentally written to log files. | Logging Stack | Data breach through log access. | **Medium** | Common developer mistake, log files often have broader access than databases. |
 | T11 | Spoofing | Compromised admin credentials, admin account taken over via phishing, credential reuse, or weak password. | Admin Portal, API Backend | Full platform compromise, read/write access to all data and configurations. | **High** | Admin accounts are high value targets. |
+
+### Threat Model Diagram
+
+![Threat Model Diagram](images/threat.jpeg)
 
 ---
 
@@ -131,6 +139,10 @@ The system is an online payment processing platform that enables customers to ma
 |---------|-------------|---------------|
 | **Log Sanitization** | Automated filters remove card numbers, and secrets from log entries before storage. | Directly fixes T10 (sensitive data leaking into logs). |
 
+### Secure Architecture Diagram
+
+![Secure Architecture Diagram](images/secure.jpeg)
+
 ---
 
 ## Task 5: Risk Treatment and Residual Risk
@@ -164,7 +176,7 @@ This report presents a complete threat model for an **Online Payment Processing 
 
 ### Architecture Diagram
 
-
+![Architecture Diagram](images/architecture.jpeg)
 
 ### Asset Inventory
 
