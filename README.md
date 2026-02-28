@@ -79,10 +79,6 @@ The system is an online payment processing platform that enables customers to ma
 
 ## Task 3: Threat Modeling
 
-### 3.1 Threat Model Table
-
-#### Threats
-
 | ID | STRIDE Category | Threat | Affected Component | Impact | Risk Level | Risk Reasoning |
 |----|----------------|--------|-------------------|--------|:---:|----------------|
 | T1 | Spoofing | Brute force attack on customer or merchant login endpoints. | API Backend (Auth module) | Unauthorized account access → financial loss, data breach. | **High** | For internet facing login endpoint, large cale automated attacks are common. |
@@ -98,3 +94,98 @@ The system is an online payment processing platform that enables customers to ma
 | T11 | Spoofing | Compromised admin credentials, admin account taken over via phishing, credential reuse, or weak password. | Admin Portal, API Backend | Full platform compromise, read/write access to all data and configurations. | **High** | Admin accounts are high value targets. |
 
 ---
+
+## Task 4: Secure Architecture Design
+
+
+### 4.1 Access Management
+
+| Control | Description | Justification |
+|---------|-------------|---------------|
+| **OAuth 2.0** | All authentication flows use OAuth 2.0. | Standardized protocol; eliminates custom auth vulnerabilities. Addresses T1, T2. |
+| **Multi-Factor Authentication (MFA)** | MFA mandatory for admin and merchant accounts; for customers on high value transactions. | Prevents credential only attacks (T1, T11). Even if passwords are compromised, MFA blocks account takeover. Reduces impact of T3 (phishing). |
+| **Role-Based Access Control** | Strict role definitions (Customer, Merchant, Support Agent, Admin) enforced at the API gateway and backend. | Directly prevents T4 (unauthorized admin access via broken role checks). Each role has minimum necessary permissions. |
+
+### 4.2 Network Segmentation
+
+| Control | Description | Justification |
+|---------|-------------|---------------|
+| **API Gateway as Single Entry Point** | All external traffic routes through an API gateway that handles rate limiting, authentication, input validation, and routing. | Centralizes security enforcement, no direct backend access possible. Primary defence against T8 (API parameter tampering) and T9 (DDoS). |
+
+### 4.3 Data Protection
+
+| Control | Description | Justification |
+|---------|-------------|---------------|
+| **Field-Level Encryption** | Critical fields (national ID, KYC docs) are encrypted at the application layer before database storage. | Adds a second layer of protection against T5 (SQL injection). |
+
+### 4.4 Secrets Management
+
+| Control | Description | Justification |
+|---------|-------------|---------------|
+| **Centralized Secrets Vault** | All secrets (DB credentials, API keys, encryption keys) stored in a dedicated vault (e.g., .env files) with access policies. | Eliminates hardcoded secrets in code or config files (assets A6, A9). |
+| **No Secrets in Code or Logs** | CI/CD pipelines inject secrets at deploy time. | Prevents accidental credential exposure through source code or T10 (sensitive data leaking into logs). |
+
+### 4.5 Monitoring and Logging
+
+| Control | Description | Justification |
+|---------|-------------|---------------|
+| **Log Sanitization** | Automated filters remove card numbers, and secrets from log entries before storage. | Directly fixes T10 (sensitive data leaking into logs). |
+
+---
+
+## Task 5: Risk Treatment and Residual Risk
+
+
+| Threat ID | Threat | Risk Level | Treatment | Treatment Details |
+|-----------|--------|:---:|-----------|-------------------|
+| T1 | Brute force | High | **Mitigate** | Rate limiting at API gateway, account lockout after repeated failures, CAPTCHA on suspicious activity. |
+| T2 | Session hijacking via stolen JWT tokens | High | **Mitigate** | Short lived tokens (15 min), refresh rotation. |
+| T3 | Phishing attacks targeting customer credentials | Medium | **Mitigate + Accept** | MFA reduces impact even if credentials are stolen. Educating user. |
+| T5 | SQL injection — mass data exfiltration from databases | High | **Mitigate** | Parameterized queries. |
+| T7 | Interception of API traffic | Medium | **Mitigate** | TLS on all channels. |
+| T8 | API parameter tampering — modified payment amounts or merchant IDs | High | **Mitigate** | Server-side validation of all inputs, signed payment requests, API gateway input schema enforcement. |
+| T9 | DDoS / API rate abuse causing service downtime | Medium | **Mitigate + Transfer** | CDN-based DDoS absorption, API rate limiting at gateway, DDoS protection services. |
+| T10 | Sensitive data leaking into log files | Medium | **Mitigate** | Automated log sanitization filters with PII and card number |
+### 5.2 Residual Risk Explanation
+
+- **Phishing:** No technical control can stop a user from entering credentials on a convincing fake site. MFA limits the damage even when credentials are stolen, but the risk cannot be fully eliminated and is accepted with ongoing user awareness efforts.
+
+- **Insider Threat (T4, T11):** A legitimate admin with valid credentials can misuse access in ways that initially look normal. Behavioral monitoring and separation of duties reduce the likelihood and blast radius, but complete elimination would require removing human access entirely, which is not feasible.
+
+- **Third-Party Dependency Risk:** Outages or breaches at the payment gateway or core banking system are outside the platform's control.
+
+---
+
+## Task 6: Final Report Summary
+
+### System Overview
+
+This report presents a complete threat model for an **Online Payment Processing Application**, an online platform that processes payments between customers and merchants via payment gateway and core banking integrations. The system consists of 9 major components spanning a web frontend, API backend, admin portal, two databases, and integrations with external payment and banking systems.
+
+### Architecture Diagram
+
+
+
+### Asset Inventory
+
+10 critical assets identified, including credentials, PII, financial data, secrets, business logic, and system configuration. Each mapped to Confidentiality, Integrity, Availability, and Accountability objectives.
+
+### Threat Model
+
+11 threats identified across the required threat areas using the STRIDE methodology. 6 classified as **High** risk (T1, T2, T4, T5, T8, T11) and 5 as **Medium** risk (T3, T6, T7, T9, T10).
+
+### Security Controls
+
+20 architectural controls across 6 categories: Identity & Access Management, Network Segmentation, Data Protection, Secrets Management, Monitoring & Logging, and Secure Deployment. Each control is justified against specific threat IDs.
+
+### Residual Risks
+
+2 residual risks acknowledged: phishing and third party dependency risk.
+
+### Assumptions and Limitations
+
+| # | Assumption / Limitation |
+|---|------------------------|
+| 1 | The core banking system and payment gateway are treated as black boxes, their internal security is not considered in this model. |
+| 2 | Physical security of data centers and endpoint security of user devices are out of scope. |
+| 3 | The threat model covers the production environment. Development and staging environments are not modeled separately. |
